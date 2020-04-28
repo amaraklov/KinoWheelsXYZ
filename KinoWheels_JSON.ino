@@ -3,11 +3,17 @@
 #include <SPI.h>
 #include <Encoder.h>
 
-char packetBuffer[UDP_TX_PACKET_MAX_SIZE];
+#define UDP_TX_PACKET_MAX_SIZE 64
 
+char packetBuffer[UDP_TX_PACKET_MAX_SIZE];
+bool debugLog = true;
+
+// This device is using DHCP if you need to set a static IP, you need to do that here.
 byte mac[] = {0x04, 0xE9, 0xE5, 0x05, 0x83, 0xA5};
-//IPAddress remoteIp(192, 168, 0, 55);  // <- EDIT!!!!
-//unsigned short remotePort = 8888;
+IPAddress ip(192, 168, 0, 88);
+IPAddress myDns(192, 168, 0, 1);
+IPAddress gateway(192, 168, 0, 1);
+IPAddress subnet(255, 255, 255, 0);
 unsigned short localPort = 8887;
 EthernetUDP udp;
 
@@ -22,6 +28,7 @@ int cacheX = -999;
 int cacheY = -999;
 int cacheZ = -999;
 
+// Setup Variables for exposing read json values
 bool dataStream;
 bool dataReset;
 
@@ -30,26 +37,27 @@ void setup() {
   Serial.begin(9600);
   while (!Serial) continue;
 
-  // Initialize Ethernet libary
-  if (!Ethernet.begin(mac)) {
-    Serial.println(F("Failed to initialize Ethernet library"));
-    return;
+  // start the Ethernet connection:
+  Serial.println("Trying to get an IP address using DHCP");
+  if (Ethernet.begin(mac) == 0) {
+    Serial.println("Failed to configure DHCP, falling back to static IP");
+    // initialize the Ethernet device not using DHCP:
+    Ethernet.begin(mac, ip, myDns, gateway, subnet);
   }
-
+  
   Serial.print("Sending from : ");
   Serial.println(Ethernet.localIP());
   // Enable UDP
   udp.begin(localPort);
-
-  
 }
 
-// Get JSON Data
-void getUDPJsonData(){
-  DynamicJsonDocument doc(200);
+// -------- Listen ---------- for JSON Data
+void getUDPJsonData(){  
   int packetSize = udp.parsePacket();
   if(packetSize)
   {
+    StaticJsonDocument<100> readDoc;    // Init Json Memory Heap 
+    //Get UDP Data
     Serial.print("Received packet of size ");
     Serial.println(packetSize);
     Serial.print("From ");
@@ -64,15 +72,15 @@ void getUDPJsonData(){
     }
     Serial.print(", port ");
     Serial.println(udp.remotePort());
-    
+   
     // read the packet into packetBufffer
-    udp.read(packetBuffer,48); 
+    udp.read(packetBuffer,48);
     Serial.print("Data Read : ");
     Serial.println(packetBuffer);           
-    char json[] = "{\"SendData\": false,\"ResetData\": false}";    
-    
-    DeserializationError error = deserializeJson(doc, packetBuffer);
-    
+    //char json[] = "{\"SendData\": false,\"ResetData\": false}"; // For sizing memory for the decoder.   
+   
+    DeserializationError error = deserializeJson(readDoc, packetBuffer);
+   
     // Test if parsing succeeds.
     if (error) {
       Serial.print(F("deserializeJson() failed: "));
@@ -84,9 +92,9 @@ void getUDPJsonData(){
       Serial.println(packetBuffer);
     }
 
-  
-    dataStream = bool (doc["SendData"]);
-    dataReset = doc["ResetData"];
+ 
+    dataStream = bool (readDoc["SendData"]);
+    dataReset = readDoc["ResetData"];
     if (dataStream){
       Serial.println("Told to Stream Data");
     }
@@ -96,52 +104,60 @@ void getUDPJsonData(){
   }
 }
 
-//Reply With Sensor Data
+// ------- Reply --------- With Sensor Data
 void sendUDPJsonData(){
-  StaticJsonDocument<100> doc;    
-  // Grab Data From Encoder
   int X_Pos, Y_Pos, Z_Pos;
-  X_Pos = X_Encoder.read();
-  Y_Pos = Y_Encoder.read();
-  Z_Pos = Z_Encoder.read();
-
+  if (dataReset){
+    // Reset Position
+    X_Pos = 0;
+    Y_Pos = 0;
+    Z_Pos = 0;
+  }
+  else {
+    // Grab Data From Encoder    
+    X_Pos = X_Encoder.read();
+    Y_Pos = Y_Encoder.read();
+    Z_Pos = Z_Encoder.read();
+  }
   // If Streaming is desired
   if (dataStream) {
-            
+    
     // If Data has Changed
-    if (X_Pos != cacheX || Y_Pos != cacheY || Z_Pos != cacheZ) {
+    if ((X_Pos != cacheX) || (Y_Pos != cacheY) || (Z_Pos != cacheZ)) {
+      DynamicJsonDocument writeDoc(256); // Init Json Memory Heap 
       float mult = .15; // So that each rotation = 360 degrees
       
-      // Create the Json Document
-      doc["SubjectName"].set("KinoWheels");
-      JsonArray values = doc.createNestedArray("Rotation");        
+      // Create the Json Document      
+      JsonObject KinoWheels = writeDoc.createNestedObject("KinoWheels");
+      JsonArray values = KinoWheels.createNestedArray("Rot");
       values.add(X_Pos*mult);
       values.add(Y_Pos*mult);
-      values.add(Z_Pos*mult);
-  
-      // Log
-      Serial.print(F("Sending to "));
-      Serial.print(udp.remoteIP());
-      Serial.print(F(" on port "));
-      Serial.println(udp.remotePort());
-      serializeJson(doc, Serial);
-    
+      values.add(Z_Pos*mult);      
+      
+      if (debugLog){
+        // Log
+        Serial.print(F("Sending to "));
+        Serial.print(udp.remoteIP());
+        Serial.print(F(" on port "));
+        Serial.println(udp.remotePort());       
+        serializeJson(writeDoc, Serial); // Debug String to see what was sent.
+      }      
+     
       // Send UDP packet
       udp.beginPacket(udp.remoteIP(), udp.remotePort());
-      serializeJson(doc, udp);
-      udp.println();
-      udp.endPacket();
+      serializeJson(writeDoc, udp);      
+      udp.endPacket();           
     }
+   
   }
   // Update position for next comparrison
   cacheX = X_Pos;
   cacheY = Y_Pos;
-  cacheZ = Z_Pos;  
+  cacheZ = Z_Pos; 
+ 
 }
 
-void loop() {
+void loop() { 
   getUDPJsonData();
   sendUDPJsonData();     
-  // Wait (May not be needed)
-  delay(10);
 }
