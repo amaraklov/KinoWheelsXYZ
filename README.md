@@ -1,7 +1,7 @@
 # KinoWheelsXYZ
-Kino Wheels Project with extra Axis
+Kino Wheels Project with extra Axis as well as a LiveLink JSON based Plugin for Unreal Engine.
 
-This is a derrivative of the original Keno Wheels project found here : https://www.kinowheels.com This adds a third axis to have Pan / Tilt / Roll or whatever you want on your other axis is up to you.
+This is a derrivative of the original Keno Wheels project found here : https://www.kinowheels.com This adds a third axis to have Pan / Tilt / Roll or whatever you want on your other axis is up to you. And to have the ability to connect it via Ethernet.
 
 
 The Arduino Sketch is based on a Teensy 3.6 and is using 6 interrupt pins for the encoders.
