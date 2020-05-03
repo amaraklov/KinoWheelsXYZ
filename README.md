@@ -3,6 +3,9 @@ Kino Wheels Project with extra Axis as well as a LiveLink JSON based Plugin for 
 
 This is a derrivative of the original Keno Wheels project found here : https://www.kinowheels.com This adds a third axis to have Pan / Tilt / Roll or whatever you want on your other axis is up to you. And to have the ability to connect it via Ethernet.
 
+The Sketch wiring diagram is a lot simpler, no resistors as the teensy is able to cope with the volatge going into the digital pns.
+
+![Arduino Sketch](/images/KinoWheels_bb.png)
 
 The Arduino Sketch is based on a Teensy 3.6 and is using 6 interrupt pins for the encoders.
 It Expects a connection handshake, to tell it where to send the data back to. It Listens on port 8887 (Which can be changed in the sketch). It Returns the data on the port that the request was sent on (8888) If you want to change that do so in unreal.
