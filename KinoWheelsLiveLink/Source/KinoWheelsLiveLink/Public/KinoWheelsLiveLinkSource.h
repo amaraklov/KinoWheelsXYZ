@@ -86,4 +86,7 @@ private:
 
 	// Buffer to receive socket data into
 	TArray<uint8> RecvBuffer;
+
+	// Has Subject Allready Been Created
+	bool bCreateSubject = true;
 };

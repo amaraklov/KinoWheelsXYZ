@@ -187,38 +187,39 @@ void FKinoWheelsLiveLinkSource::HandleReceivedCameraData(TSharedPtr<TArray<uint8
 			
 			const TSharedPtr<FJsonObject> CameraObject = JsonField.Value->AsObject();			
 
-			bool bCreateSubject = !EncounteredSubjects.Contains(SubjectName);
+			//bool bCreateSubject = !EncounteredSubjects.Contains(SubjectName);
+			
 			if (bCreateSubject)
 			{				
 						
 				FLiveLinkStaticDataStruct StaticDataStruct = FLiveLinkStaticDataStruct(FLiveLinkCameraStaticData::StaticStruct());
 				FLiveLinkCameraStaticData& StaticData = *StaticDataStruct.Cast<FLiveLinkCameraStaticData>();
 								
-				StaticData.PropertyNames.SetNumUninitialized(1);// Create an entry for it to pupulate
-				
-				FString CamObject;
-				if (CameraObject->TryGetStringField(TEXT("Name"), CamObject))
-				{					
-					StaticData.PropertyNames[0] = FName(*CamObject);
-				}
-				else
-				{
-					// Invalid Json Format
-					UE_LOG(LogTemp, Error, TEXT("LiveLinkKinoWheels: Warning Invalid Static JSON Reference"));
-					return;
-				}
+				//StaticData.PropertyNames.SetNumUninitialized(1);// Create an entry for it to pupulate
+				//
+				//FString CamObject;
+				//if (CameraObject->TryGetStringField(TEXT("Name"), CamObject))
+				//{					
+				//	StaticData.PropertyNames[0] = FName(*CamObject);
+				//}
+				//else
+				//{
+				//	// Invalid Json Format
+				//	UE_LOG(LogTemp, Error, TEXT("LiveLinkKinoWheels: Warning Invalid Static JSON Reference"));
+				//	return;
+				//}
+				SubjectName = "KinoWheels"; // Hard coded, since somehow parsing the JSON object seems to return different objects or something that confuses live link
 				Client->PushSubjectStaticData_AnyThread({ SourceGuid, SubjectName }, ULiveLinkCameraRole::StaticClass(), MoveTemp(StaticDataStruct));
 				EncounteredSubjects.Add(SubjectName);
+				bCreateSubject = false;
 			}
 			
 			FLiveLinkFrameDataStruct FrameDataStruct = FLiveLinkFrameDataStruct(FLiveLinkCameraFrameData::StaticStruct());
 			FLiveLinkCameraFrameData& FrameData = *FrameDataStruct.Cast<FLiveLinkCameraFrameData>();
 			
-
 			const TArray<TSharedPtr<FJsonValue>>* RotationArray;
-			FQuat Rotation;
-			FVector RotationVector;
-			//if (BoneObject->TryGetArrayField(TEXT("Location"), LocationArray)
+			FQuat Rotation(FQuat::Identity);
+			FVector RotationVector;			
 			if (CameraObject->TryGetArrayField(TEXT("Rot"), RotationArray)
 				&& RotationArray->Num() == 3) // X, Y, Z //->TryGetArrayField(TEXT("Rot"), RotationArray)
 			{
@@ -233,12 +234,9 @@ void FKinoWheelsLiveLinkSource::HandleReceivedCameraData(TSharedPtr<TArray<uint8
 				// Invalid Json Format
 				UE_LOG(LogTemp, Error, TEXT("LiveLinkKinoWheels: Warning Invalid Dynamic JSON Reference"));
 				return;
-			}			
-			
-			FVector Translation = FVector(FMath::RandRange(0,100), FMath::RandRange(0, 100), FMath::RandRange(0, 100));
-			//Rotation = FQuat::MakeFromEuler(FVector(FMath::FRand()*360, FMath::FRand()*360, FMath::FRand()*360)); //Test To send / overwrite with random data
-			FQuat R = FQuat::MakeFromEuler(FVector(FMath::RandRange(0, 100), FMath::RandRange(0, 100), FMath::RandRange(0, 100)));
-			FrameData.Transform = FTransform(R, Translation, FVector::OneVector);			
+			}
+
+			FrameData.Transform = FTransform(Rotation, FVector::ZeroVector, FVector::OneVector);
 			Client->PushSubjectFrameData_AnyThread({ SourceGuid, SubjectName }, MoveTemp(FrameDataStruct));			
 		}
 		
