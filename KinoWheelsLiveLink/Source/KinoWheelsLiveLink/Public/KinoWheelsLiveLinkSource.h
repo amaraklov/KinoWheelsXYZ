@@ -46,7 +46,7 @@ public:
 	// End FRunnable Interface
 
 	//void HandleReceivedData(TSharedPtr<TArray<uint8>, ESPMode::ThreadSafe> ReceivedData);
-	void HandleReceivedTransformData(TSharedPtr<TArray<uint8>, ESPMode::ThreadSafe> ReceivedData);
+	void HandleReceivedCameraData(TSharedPtr<TArray<uint8>, ESPMode::ThreadSafe> ReceivedData);
 
 private:
 
