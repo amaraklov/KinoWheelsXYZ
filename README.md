@@ -30,3 +30,14 @@ For those unfamiliar with unreal's plugin configuration, since there is no "Pre-
 
 Current Status :
 The System seems to have issues with the data I'm sending it, I've hard coded some random number values so that it sees what it sais it wants, yet it sends no data, the light in the interface doesn't turn Green. So at this point it's not functional. I hope to get some help from someone who can tell me what I'm doing wrong, and then I will start to post updates.
+
+Future Plans
+
+Arduino Hardware:
+1) to add an LCD Display to display the device IP, so that you know what it is as it's trying to use DHCP and will only fall back to hard coded IP once DHCP is unsuccessfull.
+2) use the SD Card, to "Backup the data" locally in case there's a network outage.
+3) include buttons for data start / stop, and reset.
+
+Software:
+1) add manual blueprint functions for data start data stop, and reset.
+2) add start stop / reset in the LiveLink Properties
