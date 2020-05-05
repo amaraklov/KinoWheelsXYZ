@@ -123,13 +123,14 @@ void sendUDPJsonData(){
   if (dataStream) {
     
     // If Data has Changed
-    if ((X_Pos != cacheX) || (Y_Pos != cacheY) || (Z_Pos != cacheZ)) {
+    //if ((X_Pos != cacheX) || (Y_Pos != cacheY) || (Z_Pos != cacheZ)) {
       DynamicJsonDocument writeDoc(256); // Init Json Memory Heap 
       float mult = .15; // So that each rotation = 360 degrees
       
       // Create the Json Document      
       JsonObject KinoWheels = writeDoc.createNestedObject("KinoWheels");
-      JsonArray values = KinoWheels.createNestedArray("Rot");
+      KinoWheels["Name"] = "KinoWheels";
+      JsonArray values = KinoWheels.createNestedArray("Rot");      
       values.add(X_Pos*mult);
       values.add(Y_Pos*mult);
       values.add(Z_Pos*mult);      
@@ -147,7 +148,7 @@ void sendUDPJsonData(){
       udp.beginPacket(udp.remoteIP(), udp.remotePort());
       serializeJson(writeDoc, udp);      
       udp.endPacket();           
-    }
+    //}
    
   }
   // Update position for next comparrison
@@ -159,5 +160,6 @@ void sendUDPJsonData(){
 
 void loop() { 
   getUDPJsonData();
-  sendUDPJsonData();     
+  sendUDPJsonData();
+  delay(10);     
 }
