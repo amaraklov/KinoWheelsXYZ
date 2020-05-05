@@ -46,4 +46,7 @@ Software:
 Note if you want to use POE (Power over ethernet) the adapter I used was this thing :
 UCTRONICS IEEE 802.3af Micro USB Active PoE Splitter Power Over Ethernet 48V to 5V 2.4A for Tablets, Dropcam or Raspberry Pi (48V to 5V 2.4A) 
 I'm not sponsored by amazon, but if you want an easy to use link here it is:
+This one is cheaper and only support 10/100
 https://www.amazon.com/gp/product/B01MDLUSE7/ref=ppx_yo_dt_b_asin_title_o06_s00?ie=UTF8&psc=1
+This one is a little more but supports Gigabit 10/10/1000
+https://www.amazon.com/UCTRONICS-PoE-Splitter-Gigabit-Raspberry/dp/B07CNKX14C/ref=psdc_1194444_t1_B01MDLUSE7
