@@ -42,3 +42,8 @@ Software:
 1) add manual blueprint functions for data start data stop, and reset.
 2) add start stop / reset in the LiveLink Properties
 3) Add better IP Negotiation, so that you don'y enter the universal reciver ip, which is you, but the IP of the device, and it will then negotioate to it.
+
+Note if you want to use POE (Power over ethernet) the adapter I used was this thing :
+UCTRONICS IEEE 802.3af Micro USB Active PoE Splitter Power Over Ethernet 48V to 5V 2.4A for Tablets, Dropcam or Raspberry Pi (48V to 5V 2.4A) 
+I'm not sponsored by amazon, but if you want an easy to use link here it is:
+https://www.amazon.com/gp/product/B01MDLUSE7/ref=ppx_yo_dt_b_asin_title_o06_s00?ie=UTF8&psc=1
