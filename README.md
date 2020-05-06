@@ -29,15 +29,26 @@ The Unreal Plugin, needs to be added to an Unreal Engine, I used 4.24 but it dep
 For those unfamiliar with unreal's plugin configuration, since there is no "Pre-Compiled" version I'm including at this point, you need to add at least one C++ Class which can be done from within the engine, Call it "MyClass" or "MyThrowawayClass" once that's done Grab MS Visual Studio Community or whatever works for you to compile Unreal Code. and Re-Compile the plugin, at that point you should have a "KinoWheelsLiveLink" Source in the Live LinkPanel, and you should get a dialog for the IP. I need to change that because the Arduino is waiting for a connection to tell it to send data, or to stop. And it will then send data back to the requestor. So the IP in the dialog should be the arduino, and it should then automatically send back data. This is going to get worked on, as well as sending the arduino, or "Zero" out the values, and to start and stop sending data. Which should be a toggle and a boolean state (Check Box) once done.
 
 Current Status :
-The System seems to have issues with the data I'm sending it, I've hard coded some random number values so that it sees what it sais it wants, yet it sends no data, the light in the interface doesn't turn Green. So at this point it's not functional. I hope to get some help from someone who can tell me what I'm doing wrong, and then I will start to post updates.
+The System Works
 
 Future Plans
 
 Arduino Hardware:
-1) to add an LCD Display to display the device IP, so that you know what it is as it's trying to use DHCP and will only fall back to hard coded IP once DHCP is unsuccessfull.
+1) (IP) to add an LCD Display to display the device IP, so that you know what it is as it's trying to use DHCP and will only fall back to hard coded IP once DHCP is unsuccessfull.
 2) use the SD Card, to "Backup the data" locally in case there's a network outage.
 3) include buttons for data start / stop, and reset.
 
 Software:
 1) add manual blueprint functions for data start data stop, and reset.
 2) add start stop / reset in the LiveLink Properties
+3) Add better IP Negotiation, so that you don'y enter the universal reciver ip, which is you, but the IP of the device, and it will then negotioate to it.
+
+Note if you want to use POE (Power over ethernet) the adapter I used was this thing :
+UCTRONICS IEEE 802.3af Micro USB Active PoE Splitter Power Over Ethernet 48V to 5V 2.4A for Tablets, Dropcam or Raspberry Pi (48V to 5V 2.4A) 
+I'm not sponsored by amazon, but if you want an easy to use link here it is:
+
+This one is cheaper and only support 10/100 :
+https://www.amazon.com/gp/product/B01MDLUSE7/ref=ppx_yo_dt_b_asin_title_o06_s00?ie=UTF8&psc=1
+
+This one is a little more but supports Gigabit 10/10/1000 :
+https://www.amazon.com/UCTRONICS-PoE-Splitter-Gigabit-Raspberry/dp/B07CNKX14C/ref=psdc_1194444_t1_B01MDLUSE7
