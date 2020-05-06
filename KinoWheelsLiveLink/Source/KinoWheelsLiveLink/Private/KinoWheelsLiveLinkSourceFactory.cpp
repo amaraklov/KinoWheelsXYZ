@@ -7,7 +7,7 @@
 
 FText UKinoWheelsLiveLinkSourceFactory::GetSourceDisplayName() const
 {
-	return LOCTEXT("SourceDisplayName", "KinoWheels LiveLink");
+	return LOCTEXT("SourceDisplayName", "KinoWheels");
 }
 
 FText UKinoWheelsLiveLinkSourceFactory::GetSourceTooltip() const
@@ -31,6 +31,8 @@ TSharedPtr<ILiveLinkSource> UKinoWheelsLiveLinkSourceFactory::CreateSource(const
 
 	return MakeShared<FKinoWheelsLiveLinkSource>(DeviceEndPoint);
 }
+
+
 
 void UKinoWheelsLiveLinkSourceFactory::OnOkClicked(FIPv4Endpoint InEndpoint, FOnLiveLinkSourceCreated InOnLiveLinkSourceCreated) const
 {

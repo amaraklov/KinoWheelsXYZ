@@ -13,7 +13,7 @@ class SEditableTextBox;
 class SKinoWheelsLiveLinkSourceFactory : public SCompoundWidget
 {
 public:
-	DECLARE_DELEGATE_OneParam(FOnOkClicked, FIPv4Endpoint);
+	DECLARE_DELEGATE_OneParam(FOnOkClicked, FIPv4Endpoint);	
 
 	SLATE_BEGIN_ARGS(SKinoWheelsLiveLinkSourceFactory){}
 		SLATE_EVENT(FOnOkClicked, OnOkClicked)

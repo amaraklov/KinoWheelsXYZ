@@ -1,23 +1,23 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "0.8",
+	"VersionName": "1.0",
 	"FriendlyName": "KinoWheelsLiveLink",
 	"Description": "LiveLink Source for receiving KinoWheels Data over UDP sockets",
-	"Category": "VirtualProduction",
+	"Category": "Virtual Production",
 	"CreatedBy": "Andrei Maraklov",
-	"CreatedByURL": "",
-	"DocsURL": "",
+	"CreatedByURL": "https://github.com/amaraklov/KinoWheelsXYZ",
+	"DocsURL": "https://github.com/amaraklov/KinoWheelsXYZ",
 	"MarketplaceURL": "",
-	"SupportURL": "",
+	"SupportURL": "https://github.com/amaraklov/KinoWheelsXYZ",
 	"CanContainContent": true,
-	"IsBetaVersion": true,
+	"IsBetaVersion": false,
 	"Installed": false,
-  "Modules": [
-    {
-      "Name": "KinoWheelsLiveLink",
-      "Type": "Runtime",
-      "LoadingPhase": "Default"
-    }
-  ]
+	"Modules": [
+		{
+			"Name": "KinoWheelsLiveLink",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
 }

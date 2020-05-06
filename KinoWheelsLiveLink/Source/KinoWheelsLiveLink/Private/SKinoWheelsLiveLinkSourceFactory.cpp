@@ -13,11 +13,11 @@
 void SKinoWheelsLiveLinkSourceFactory::Construct(const FArguments& Args)
 {
 	OkClicked = Args._OnOkClicked;
-
+	
 	FIPv4Endpoint Endpoint;
 	//Endpoint.Address = FIPv4Address::FIPv4Address(0,0,0,0);
-	Endpoint.Address = FIPv4Address::Any;
-	Endpoint.Port = 8888;
+	Endpoint.Address = FIPv4Address(192,168,0,88);
+	Endpoint.Port = 8887;
 
 	ChildSlot
 	[
@@ -34,7 +34,7 @@ void SKinoWheelsLiveLinkSourceFactory::Construct(const FArguments& Args)
 				.FillWidth(0.5f)
 				[
 					SNew(STextBlock)
-					.Text(LOCTEXT("JSONPortNumber", "Port Number"))
+					.Text(LOCTEXT("KinoWheelsPortNumber", "Port Number"))
 				]
 				+ SHorizontalBox::Slot()
 				.HAlign(HAlign_Fill)
@@ -68,8 +68,8 @@ void SKinoWheelsLiveLinkSourceFactory::OnEndpointChanged(const FText& NewValue, 
 		FIPv4Endpoint Endpoint;
 		if (!FIPv4Endpoint::Parse(NewValue.ToString(), Endpoint))
 		{
-			Endpoint.Address = FIPv4Address::Any;
-			Endpoint.Port = 54321;
+			Endpoint.Address = FIPv4Address(192,168,0,88);
+			Endpoint.Port = 8887;
 			EditabledTextPin->SetText(FText::FromString(Endpoint.ToString()));
 		}
 	}

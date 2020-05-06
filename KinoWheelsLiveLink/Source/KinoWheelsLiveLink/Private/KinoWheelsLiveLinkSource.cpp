@@ -4,8 +4,6 @@
 
 #include "ILiveLinkClient.h"
 #include "LiveLinkTypes.h"
-//#include "Roles/LiveLinkAnimationRole.h"
-//#include "Roles/LiveLinkAnimationTypes.h"
 
 #include "Roles/LiveLinkCameraRole.h"
 #include "Roles/LiveLinkCameraTypes.h"
@@ -30,32 +28,34 @@ FKinoWheelsLiveLinkSource::FKinoWheelsLiveLinkSource(FIPv4Endpoint InEndpoint)
 , WaitTime(FTimespan::FromMilliseconds(100))
 {
 	// defaults
+	//DeviceEndpoint = InEndpoint; // Override default behavior
 	DeviceEndpoint = InEndpoint;
+	SelfEndpoint = FIPv4Endpoint::Any;
 
 	SourceStatus = LOCTEXT("SourceStatus_DeviceNotFound", "Device Not Found");
-	SourceType = LOCTEXT("KinoWheelsLiveLinkSourceType", "KinoWheels LiveLink");
-	SourceMachineName = LOCTEXT("KinoWheelsLiveLinkSourceMachineName", "localhost");
+	SourceType = LOCTEXT("KinoWheelsLiveLinkSourceType", "KinoWheels");	
+	SourceMachineName = FText::FromString(DeviceEndpoint.ToString());
 
 	//setup socket
-	if (DeviceEndpoint.Address.IsMulticastAddress())
+	if (SelfEndpoint.Address.IsMulticastAddress())
 	{
-		Socket = FUdpSocketBuilder(TEXT("KINOWHEELSSOCKET"))
+		Socket = FUdpSocketBuilder(TEXT("KINOWHEELSSOCKET_SELF"))
 			.AsNonBlocking()
 			.AsReusable()
-			.BoundToPort(DeviceEndpoint.Port)
+			.BoundToPort(SelfEndpoint.Port)
 			.WithReceiveBufferSize(RECV_BUFFER_SIZE)
 			.BoundToAddress(FIPv4Address::Any)
-			.JoinedToGroup(DeviceEndpoint.Address)
+			.JoinedToGroup(SelfEndpoint.Address)
 			.WithMulticastLoopback()
 			.WithMulticastTtl(2);
 	}
 	else
 	{
-		Socket = FUdpSocketBuilder(TEXT("KINOWHEELSSOCKET"))
+		Socket = FUdpSocketBuilder(TEXT("KINOWHEELSSOCKET_SELF"))
 			.AsNonBlocking()
 			.AsReusable()
-			.BoundToAddress(DeviceEndpoint.Address)
-			.BoundToPort(DeviceEndpoint.Port)
+			.BoundToAddress(SelfEndpoint.Address)
+			.BoundToPort(SelfEndpoint.Port)
 			.WithReceiveBufferSize(RECV_BUFFER_SIZE);
 	}
 
@@ -67,7 +67,7 @@ FKinoWheelsLiveLinkSource::FKinoWheelsLiveLinkSource(FIPv4Endpoint InEndpoint)
 
 		Start();
 
-		SourceStatus = LOCTEXT("SourceStatus_Receiving", "Receiving");
+		SourceStatus = LOCTEXT("SourceStatus_Receiving", "Receiving");		
 	}
 
 }
@@ -83,6 +83,7 @@ FKinoWheelsLiveLinkSource::~FKinoWheelsLiveLinkSource()
 	}
 	if (Socket != nullptr)
 	{
+		SendData("{\"SendData\": false,\"ResetData\": false}");
 		Socket->Close();
 		ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(Socket);
 	}
@@ -106,24 +107,24 @@ bool FKinoWheelsLiveLinkSource::IsSourceStillValid() const
 bool FKinoWheelsLiveLinkSource::RequestSourceShutdown()
 {
 	Stop();
-
+	SendData("{\"SendData\": false,\"ResetData\": false}");
 	return true;
 }
 // FRunnable interface
 
+void FKinoWheelsLiveLinkSource::SendData(FString Message) {
+	TSharedRef<FInternetAddr> Addr = DeviceEndpoint.ToInternetAddr();
+	int32 DataSize;
+	Socket->SendTo((uint8*)TCHAR_TO_UTF8(Message.GetCharArray().GetData()), Message.GetCharArray().Num(), DataSize, *Addr);
+	// Done Sending Wakup Data
+}
+
 void FKinoWheelsLiveLinkSource::Start()
 {
 	// Send some UDP Data to the device to wake it up:
-	TSharedRef<FInternetAddr> Addr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
-	bool bIsValid = false;
-	Addr->SetIp(TEXT("192.168.0.88"), bIsValid); // Destination IP
-	Addr->SetPort(8887); // Destination port
-
-	FString Message = "{\"SendData\": true,\"ResetData\": false}";
-	int32 DataSize;
-
-	Socket->SendTo((uint8*)TCHAR_TO_UTF8(Message.GetCharArray().GetData()), Message.GetCharArray().Num(), DataSize, *Addr);
-	// End Send intitial data
+	SendData("{\"SendData\": true,\"ResetData\": false}");
+	// Done Sending Wakup Data
+	
 
 	ThreadName = "KinoWheels UDP Receiver ";
 	ThreadName.AppendInt(FAsyncThreadIndex::GetNext());
@@ -132,8 +133,12 @@ void FKinoWheelsLiveLinkSource::Start()
 }
 
 void FKinoWheelsLiveLinkSource::Stop()
-{
+{	
 	Stopping = true;
+}
+
+void FKinoWheelsLiveLinkSource::Reset() {
+	SendData("{\"SendData\": true,\"ResetData\": true}");
 }
 
 uint32 FKinoWheelsLiveLinkSource::Run()
@@ -214,30 +219,52 @@ void FKinoWheelsLiveLinkSource::HandleReceivedCameraData(TSharedPtr<TArray<uint8
 				bCreateSubject = false;
 			}
 			
-			FLiveLinkFrameDataStruct FrameDataStruct = FLiveLinkFrameDataStruct(FLiveLinkCameraFrameData::StaticStruct());
-			FLiveLinkCameraFrameData& FrameData = *FrameDataStruct.Cast<FLiveLinkCameraFrameData>();
-			
-			const TArray<TSharedPtr<FJsonValue>>* RotationArray;
-			FQuat Rotation(FQuat::Identity);
-			FVector RotationVector;			
-			if (CameraObject->TryGetArrayField(TEXT("Rot"), RotationArray)
-				&& RotationArray->Num() == 3) // X, Y, Z //->TryGetArrayField(TEXT("Rot"), RotationArray)
-			{
-				double X = (*RotationArray)[0]->AsNumber();
-				double Y = (*RotationArray)[1]->AsNumber();
-				double Z = (*RotationArray)[2]->AsNumber();
-				RotationVector = FVector(X, Y, Z);
-				Rotation = FQuat::MakeFromEuler(RotationVector);
-			}
-			else
-			{
-				// Invalid Json Format
-				UE_LOG(LogTemp, Error, TEXT("LiveLinkKinoWheels: Warning Invalid Dynamic JSON Reference"));
-				return;
-			}
+			if (!Stopping) { // Prevent this from generating data if it's shutting down.
 
-			FrameData.Transform = FTransform(Rotation, FVector::ZeroVector, FVector::OneVector);
-			Client->PushSubjectFrameData_AnyThread({ SourceGuid, SubjectName }, MoveTemp(FrameDataStruct));			
+				FLiveLinkFrameDataStruct FrameDataStruct = FLiveLinkFrameDataStruct(FLiveLinkCameraFrameData::StaticStruct());
+				FLiveLinkCameraFrameData& FrameData = *FrameDataStruct.Cast<FLiveLinkCameraFrameData>();
+
+				const TArray<TSharedPtr<FJsonValue>>* RotationArray;
+				const TArray<TSharedPtr<FJsonValue>>* TranslationArray;
+				FQuat Rotation(FQuat::Identity);
+				FVector RotationVector(FVector::ZeroVector);
+				FVector Translation(FVector::ZeroVector);
+				if (CameraObject->TryGetArrayField(TEXT("Rot"), RotationArray)
+					&& RotationArray->Num() == 3) // X, Y, Z //->TryGetArrayField(TEXT("Rot"), RotationArray)
+				{
+					double X = (*RotationArray)[0]->AsNumber();
+					double Y = (*RotationArray)[1]->AsNumber();
+					double Z = (*RotationArray)[2]->AsNumber();
+					RotationVector = FVector(X, Y, Z);
+					Rotation = FQuat::MakeFromEuler(RotationVector);
+				}
+				else
+				{
+					// Invalid Json Format
+					UE_LOG(LogTemp, Error, TEXT("LiveLinkKinoWheels: Warning Invalid Dynamic JSON Reference"));
+					return;
+				}
+
+				if (CameraObject->TryGetArrayField(TEXT("Rot"), TranslationArray)
+					&& TranslationArray->Num() == 3) // X, Y, Z //->TryGetArrayField(TEXT("Rot"), RotationArray)
+				{
+					double X = (*TranslationArray)[0]->AsNumber();
+					double Y = (*TranslationArray)[1]->AsNumber();
+					double Z = (*TranslationArray)[2]->AsNumber();
+					Translation = FVector(X, Y, Z);
+				}
+				else
+				{
+					// Invalid Json Format
+					UE_LOG(LogTemp, Error, TEXT("LiveLinkKinoWheels: Warning Invalid Dynamic JSON Reference"));
+					return;
+				}
+
+
+				FrameData.Transform = FTransform(Rotation, Translation, FVector::OneVector);
+				FrameData.FocalLength = Translation.Z;
+				Client->PushSubjectFrameData_AnyThread({ SourceGuid, SubjectName }, MoveTemp(FrameDataStruct));
+			}
 		}
 		
 	}

@@ -41,12 +41,17 @@ public:
 	virtual uint32 Run() override;
 	void Start();
 	virtual void Stop() override;
+	void Reset(); // Added to set the encoders back to zero
 	virtual void Exit() override { }
+
 
 	// End FRunnable Interface
 
 	//void HandleReceivedData(TSharedPtr<TArray<uint8>, ESPMode::ThreadSafe> ReceivedData);
 	void HandleReceivedCameraData(TSharedPtr<TArray<uint8>, ESPMode::ThreadSafe> ReceivedData);
+
+	// Send data to device to initiate communication
+	void SendData(FString Message);
 
 private:
 
@@ -62,9 +67,13 @@ private:
 	FText SourceStatus;
 
 	FIPv4Endpoint DeviceEndpoint;
+	FIPv4Endpoint SelfEndpoint = FIPv4Endpoint::Any;
+	FIPv4Endpoint DeviceConnection;
 
 	// Socket to receive data on
 	FSocket* Socket;
+
+	
 
 	// Subsystem associated to Socket
 	ISocketSubsystem* SocketSubsystem;
